@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+readonly PROJECT_SLUG="dalian-children-hospital-fire-plan"
+readonly RELEASE_SCRIPT="/srv/apps/${PROJECT_SLUG}/deploy/release.sh"
+readonly BUNDLE_PATTERN="/tmp/${PROJECT_SLUG}-[0-9]+-[0-9]+\\.bundle"
+readonly ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND:-}"
+
+scp_pattern="^scp[[:space:]]+-t[[:space:]]+(${BUNDLE_PATTERN})$"
+release_pattern="^${RELEASE_SCRIPT//./\\.}[[:space:]]+'([0-9a-f]{40})'[[:space:]]+'(${BUNDLE_PATTERN})'$"
+
+if [[ "$ORIGINAL_COMMAND" =~ $scp_pattern ]]; then
+  exec /usr/bin/scp -t -- "${BASH_REMATCH[1]}"
+fi
+
+if [[ "$ORIGINAL_COMMAND" =~ $release_pattern ]]; then
+  exec "$RELEASE_SCRIPT" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+fi
+
+echo "command not permitted" >&2
+exit 126

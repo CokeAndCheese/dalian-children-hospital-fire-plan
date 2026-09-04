@@ -61,6 +61,5 @@ jobs:
         run: |
           set -euo pipefail
           SSH_ARGS=(-i "$HOME/.ssh/lighthouse_ci" -o BatchMode=yes -o IdentitiesOnly=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
-          scp "${SSH_ARGS[@]}" release.bundle "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_BUNDLE"
+          scp -O "${SSH_ARGS[@]}" release.bundle "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_BUNDLE"
           ssh "${SSH_ARGS[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "/srv/apps/dalian-children-hospital-fire-plan/deploy/release.sh '$GITHUB_SHA' '$REMOTE_BUNDLE'"
-

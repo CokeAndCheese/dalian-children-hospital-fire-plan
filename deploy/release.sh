@@ -109,10 +109,9 @@ if [[ "$health" != "healthy" ]]; then
 fi
 
 sudo docker exec "$CONTAINER_NAME" wget -qO- http://127.0.0.1/health | grep -Fxq ok
-curl --fail --silent --show-error --max-time 20 "$PUBLIC_URL" | grep -Fq "$CONTENT_MARKER"
+curl --fail --silent --show-error --max-time 20 "$PUBLIC_URL" | grep -F "$CONTENT_MARKER" >/dev/null
 
 trap - ERR
 cleanup
 trap - EXIT
 echo "release complete: ${expected_commit}"
-

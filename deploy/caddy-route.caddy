@@ -1,0 +1,6 @@
+redir /dalian-children-hospital-fire-plan /dalian-children-hospital-fire-plan/ 308
+
+handle_path /dalian-children-hospital-fire-plan/* {
+    reverse_proxy dalian-children-hospital-fire-plan:80
+}
+

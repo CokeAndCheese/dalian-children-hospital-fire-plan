@@ -1,0 +1,25 @@
+name: dalian-children-hospital-fire-plan
+
+services:
+  web:
+    build:
+      context: .
+    image: dalian-children-hospital-fire-plan:local
+    container_name: dalian-children-hospital-fire-plan
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+    name: web
+

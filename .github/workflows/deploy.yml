@@ -1,0 +1,66 @@
+name: Deploy to Tencent Lighthouse
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-dalian-children-hospital-fire-plan
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.LIGHTHOUSE_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ vars.LIGHTHOUSE_HOST }}
+      DEPLOY_USER: ${{ vars.LIGHTHOUSE_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.LIGHTHOUSE_SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.LIGHTHOUSE_KNOWN_HOSTS }}
+      REMOTE_BUNDLE: /tmp/dalian-children-hospital-fire-plan-${{ github.run_id }}-${{ github.run_attempt }}.bundle
+
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+
+      - name: Create exact release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          git update-ref refs/heads/release-main "$GITHUB_SHA"
+          git bundle create release.bundle refs/heads/release-main
+          git bundle verify release.bundle
+
+      - name: Configure pinned SSH identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/lighthouse_ci"
+          chmod 600 "$HOME/.ssh/lighthouse_ci"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Upload and release
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH_ARGS=(-i "$HOME/.ssh/lighthouse_ci" -o BatchMode=yes -o IdentitiesOnly=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          scp "${SSH_ARGS[@]}" release.bundle "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_BUNDLE"
+          ssh "${SSH_ARGS[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "/srv/apps/dalian-children-hospital-fire-plan/deploy/release.sh '$GITHUB_SHA' '$REMOTE_BUNDLE'"
+

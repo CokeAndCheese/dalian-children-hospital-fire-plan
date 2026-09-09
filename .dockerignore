@@ -6,4 +6,5 @@
 *.log
 deploy
 *.md
-
+.private
+server/*.test.mjs

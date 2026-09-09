@@ -38,6 +38,24 @@ jobs:
           test -n "$SSH_PRIVATE_KEY"
           test -n "$SSH_KNOWN_HOSTS"
 
+      - name: Test production AI proxy
+        run: node --test server/proxy.test.mjs
+
+      - name: Validate release package
+        run: node deploy/verify-package.mjs
+
+      - name: Verify containers with non-secret fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          export AI_ENV_FILE="$RUNNER_TEMP/fire-plan-ci.env"
+          printf '%s\n' 'LLM_API_KEY=ci-nonsecret-placeholder' 'AI_ACCESS_MODE=token' 'AI_ACCESS_CODE=ci-verification-access' 'PUBLIC_ORIGIN=http://115.159.223.98' > "$AI_ENV_FILE"
+          docker network inspect web >/dev/null 2>&1 || docker network create web
+          trap 'docker compose down' EXIT
+          docker compose config --quiet
+          docker compose up -d --build --wait --wait-timeout 120
+          docker exec dalian-children-hospital-fire-plan-ai node --input-type=module -e "const r=await fetch('http://web/api/llm/chat/completions',{method:'POST',headers:{Origin:'http://115.159.223.98','Content-Type':'application/json'},body:'{}'}); if(r.status!==401) throw new Error('AI authentication route failed: '+r.status);"
+
       - name: Create exact release bundle
         shell: bash
         run: |
@@ -60,6 +78,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SSH_ARGS=(-i "$HOME/.ssh/lighthouse_ci" -o BatchMode=yes -o IdentitiesOnly=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          SSH_ARGS=(-i "$HOME/.ssh/lighthouse_ci" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
           scp -O "${SSH_ARGS[@]}" release.bundle "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_BUNDLE"
           ssh "${SSH_ARGS[@]}" "$DEPLOY_USER@$DEPLOY_HOST" "/srv/apps/dalian-children-hospital-fire-plan/deploy/release.sh '$GITHUB_SHA' '$REMOTE_BUNDLE'"

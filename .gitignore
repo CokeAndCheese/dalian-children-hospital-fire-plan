@@ -3,4 +3,4 @@
 .env.*
 !.env.example
 *.log
-
+.private/

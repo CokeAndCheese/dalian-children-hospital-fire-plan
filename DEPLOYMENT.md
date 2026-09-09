@@ -1,5 +1,13 @@
 # 更新发布说明
 
+## 2026-09-09 HTTP 兼容修复补充
+
+`ffd36d8` 已推送，CI 的测试与双容器门禁通过；因 GitHub 到腾讯云上传过慢，取消该次作业后由 Mac 中转同一提交发布。公网完整模型加载后暴露 HTTP 环境不提供 `crypto.randomUUID()` 的问题，故已恢复旧版 `f62ba12`。旧镜像记录 ID 已无法使用，回滚由准确旧提交重建完成，当前旧 web healthy；AI 容器停止，密钥和额度卷保留。
+
+本地 Planner/IntentLogger 已使用原生 UUID 优先、getRandomValues 的 UUID v4 兼容路径。缺少 randomUUID 的回归、类型检查、构建和真实非安全 HTTP 浏览器模型初始化/炸开/合拢测试通过。修复包 `platformEmbed-B7oBQpSw.js` 待推送，不需要重新运行凭据配置脚本。此次新增改动仅为页面构建、发布检查和本文说明，未更改医院模型。
+
+当前回滚基线提交仍为 `f62ba122d8bbd885ec3c2160e629fbc197019111`，重建后的镜像为 `sha256:052c4e5104e2d5b937ceef42b3bbc3ea654eac45cd7a1673d5ee3eb409a96985`。以下历史准备记录保留供追溯；下次发布前须重新读取实际版本和镜像。
+
 ## 已核对的原版本
 
 - 仓库：https://github.com/CokeAndCheese/dalian-children-hospital-fire-plan ，分支 main。

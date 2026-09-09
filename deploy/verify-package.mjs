@@ -5,6 +5,7 @@ const read = (path) => readFileSync(path, 'utf8')
 const embed = read('site/platform-embed.html')
 const script = embed.match(/src="\.\/([^\"]+\.js)"/)?.[1]
 assert(script && read(`site/${script}`).includes('空间指令'), 'missing spatial chat release')
+assert(read(`site/${script}`).includes('浏览器缺少随机数能力') && read(`site/${script}`).includes('getRandomValues'), 'missing public-HTTP runtime ID compatibility')
 assert(read('site/fire-rescue-cockpit.html').includes('id="fire-rescue-cockpit"'), 'missing cockpit')
 assert.equal(readdirSync('site/models/hospital').filter((name) => name.endsWith('.glb')).length, 55, 'must contain 55 semantic GLBs')
 for (const name of readdirSync('site/models/hospital').filter((name) => name.endsWith('.glb'))) {
